@@ -8,9 +8,14 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/sashabaranov/go-openai"
+	"github.com/yoyo1025/persona-api/database"
 )
 
-var db *sql.DB
+var (
+	db           *sql.DB
+	openaiClient *openai.Client
+)
 
 func initDB() {
 	var err error
@@ -33,20 +38,30 @@ func initDB() {
 	}
 }
 
+func initOpenAI() {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		log.Fatal("OpenAI APIキーが設定されていません")
+	}
+	openaiClient = openai.NewClient(apiKey)
+}
+
 func main() {
 	fmt.Println("now server started...")
 	initDB()
+	database.SetDB(db)
 	defer db.Close()
 
-	// シンプルなハンドラー
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello, World!")
-	})
+	initOpenAI()
 
-	// サーバーをポート3000で起動
+	// OpenAIクライアントをデータベースパッケージに渡す
+	database.SetOpenAIClient(openaiClient)
+
+	http.HandleFunc("/register", database.RegisterPersona)
+
+	
+	// サーバーを起動
 	if err := http.ListenAndServe(":3000", nil); err != nil {
-		fmt.Println("サーバー起動中にエラーが発生しました:", err)
+		log.Fatal("サーバー起動中にエラーが発生しました:", err)
 	}
-
-	fmt.Println("プログラムを終了します")
 }
