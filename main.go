@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/sashabaranov/go-openai"
 	"github.com/yoyo1025/persona-api/database"
+	"github.com/yoyo1025/persona-api/middleware"
 )
 
 var (
@@ -57,11 +58,18 @@ func main() {
 	// OpenAIクライアントをデータベースパッケージに渡す
 	database.SetOpenAIClient(openaiClient)
 
-	http.HandleFunc("/register", database.RegisterPersona)
-	http.HandleFunc("/conversation/", ConversationHandler)
+	// マルチプレクサを作成
+	mux := http.NewServeMux()
+
+	// ハンドラーを登録
+	mux.HandleFunc("/register", database.RegisterPersona)
+	mux.HandleFunc("/conversation/", ConversationHandler)
+
+	// CORSミドルウェアを適用
+	handler := middleware.CORS(mux)
 	
 	// サーバーを起動
-	if err := http.ListenAndServe(":3000", nil); err != nil {
+	if err := http.ListenAndServe(":3000", handler); err != nil {
 		log.Fatal("サーバー起動中にエラーが発生しました:", err)
 	}
 }
