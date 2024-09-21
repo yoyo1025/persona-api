@@ -52,7 +52,7 @@ func RegisterPersona(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// OpenAI APIを使ってペルソナの問題を解決するためのコメントを生成
-	commentText, err := util.GenerateAIResponse(persona, openaiClient)
+	commentText, err := util.CreatePersonaFirstComment(persona, openaiClient)
 	if err != nil {
 		http.Error(w, "AI応答の生成に失敗しました: "+err.Error(), http.StatusInternalServerError)
 		return
