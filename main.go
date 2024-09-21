@@ -58,7 +58,7 @@ func main() {
 	database.SetOpenAIClient(openaiClient)
 
 	http.HandleFunc("/register", database.RegisterPersona)
-
+	http.HandleFunc("/conversation/", ConversationHandler)
 	
 	// サーバーを起動
 	if err := http.ListenAndServe(":3000", nil); err != nil {

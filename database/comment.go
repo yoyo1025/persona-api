@@ -1,1 +1,143 @@
 package database
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+func GetAllCommnetsByID(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "許可されていないメソッドです", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// リクエストされたパスを取得
+	path := r.URL.Path
+
+	// パスを"/"で分割
+	segments := strings.Split(path, "/")
+
+	// パスの形式をチェック
+	if len(segments) >= 3 && segments[1] == "conversation" {
+		personaID, err := strconv.Atoi(segments[2])
+		if err != nil {
+			http.Error(w, "不正なIDフォーマットです", http.StatusBadRequest)
+			return
+		}
+
+		// クエリ実行
+		query := `SELECT id, user_id, persona_id, comment, is_user_comment, good FROM comment WHERE persona_id = $1`
+		rows, err := db.Query(query, personaID)
+		if err != nil {
+			http.Error(w, "コメントの取得に失敗しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		// コメントを格納するスライス
+		comments := []map[string]interface{}{}
+
+		// クエリ結果を読み込み
+		for rows.Next() {
+			var id, userID, personaID int
+			var comment string
+			var isUserComment, good bool
+
+			err := rows.Scan(&id, &userID, &personaID, &comment, &isUserComment, &good)
+			if err != nil {
+				http.Error(w, "データの読み取りに失敗しました: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// コメントデータをマップに格納
+			commentData := map[string]interface{}{
+				"id":              id,
+				"user_id":         userID,
+				"persona_id":      personaID,
+				"comment":         comment,
+				"is_user_comment": isUserComment,
+				"good":            good,
+			}
+
+			// スライスに追加
+			comments = append(comments, commentData)
+		}
+
+		// rows.Err()での最終的なエラーチェック
+		if err := rows.Err(); err != nil {
+			http.Error(w, "クエリ結果の読み取り中にエラーが発生しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// JSONでレスポンスを返す
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(comments)
+		if err != nil {
+			http.Error(w, "レスポンスのエンコードに失敗しました: "+err.Error(), http.StatusInternalServerError)
+		}
+
+	} else {
+		// パスが一致しない場合は404を返す
+		http.NotFound(w, r)
+	}
+}
+
+func PostComment(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "許可されていないメソッドです", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// リクエストされたパスを取得
+	path := r.URL.Path
+
+	// パスを"/"で分割
+	segments := strings.Split(path, "/")
+
+	// パスの形式をチェック
+	if len(segments) >= 3 && segments[1] == "conversation" {
+		// personaIDを取得
+		personaID, err := strconv.Atoi(segments[2])
+		if err != nil {
+			http.Error(w, "不正なIDフォーマットです", http.StatusBadRequest)
+			return
+		}
+
+		// リクエストボディからコメント情報をデコード
+		var commentData struct {
+			Comment       string `json:"comment"`
+			IsUserComment bool   `json:"is_user_comment"`
+			Good          bool   `json:"good"`
+		}
+
+		err = json.NewDecoder(r.Body).Decode(&commentData)
+		if err != nil {
+			http.Error(w, "リクエストデータのデコードに失敗しました", http.StatusBadRequest)
+			return
+		}
+
+		// コメントをデータベースに挿入
+		query := `
+			INSERT INTO comment (user_id, persona_id, comment, is_user_comment, good)
+			VALUES ($1, $2, $3, $4, $5)
+		`
+		_, err = db.Exec(query, 1, personaID, commentData.Comment, commentData.IsUserComment, commentData.Good)
+		if err != nil {
+			http.Error(w, "データベースへのコメント挿入に失敗しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// レスポンスを返す
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]string{"message": "コメントが正常に追加されました"}
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "レスポンスのエンコードに失敗しました: "+err.Error(), http.StatusInternalServerError)
+		}
+	} else {
+		// パスが一致しない場合は404を返す
+		http.NotFound(w, r)
+	}
+}
