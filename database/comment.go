@@ -127,10 +127,48 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// 指定したペルソナIDとの会話履歴を取得
+		query1 := `
+			SELECT id, comment FROM comment WHERE persona_id = $1
+		`
+		rows, err := db.Query(query1, personaID)
+		if err != nil {
+			http.Error(w, "コメントの取得に失敗しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		// コメントを格納するスライス
+		comments := []map[string]interface{}{}
+
+		for rows.Next() {
+			var id int
+			var comment string
+
+			err := rows.Scan(&id, &comment)
+			if err != nil {
+				http.Error(w, "データの読み取りに失敗しました："+err.Error(), http.StatusInternalServerError)
+				return 
+			}
+
+			commentData := map[string]interface{}{
+				"id": id,
+				"comment": comment,
+			}
+
+			comments = append(comments, commentData)
+		}
+
+		// rows.Err()での最終的なエラーチェック
+		if err := rows.Err(); err != nil {
+			http.Error(w, "クエリ結果の読み取り中にエラーが発生しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		// レスポンスを返す
 		w.Header().Set("Content-Type", "application/json")
-		response := map[string]string{"message": "コメントが正常に追加されました"}
-		err = json.NewEncoder(w).Encode(response)
+		// response := map[string]string{"message": "コメントが正常に追加されました"}
+		err = json.NewEncoder(w).Encode(comments)
 		if err != nil {
 			http.Error(w, "レスポンスのエンコードに失敗しました: "+err.Error(), http.StatusInternalServerError)
 		}
