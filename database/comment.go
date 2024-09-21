@@ -108,8 +108,6 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 		// リクエストボディからコメント情報をデコード
 		var commentData struct {
 			Comment       string `json:"comment"`
-			IsUserComment bool   `json:"is_user_comment"`
-			Good          bool   `json:"good"`
 		}
 
 		err = json.NewDecoder(r.Body).Decode(&commentData)
@@ -123,7 +121,7 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 			INSERT INTO comment (user_id, persona_id, comment, is_user_comment, good)
 			VALUES ($1, $2, $3, $4, $5)
 		`
-		_, err = db.Exec(query, 1, personaID, commentData.Comment, commentData.IsUserComment, commentData.Good)
+		_, err = db.Exec(query, 1, personaID, commentData.Comment, true, false)
 		if err != nil {
 			http.Error(w, "データベースへのコメント挿入に失敗しました: "+err.Error(), http.StatusInternalServerError)
 			return
