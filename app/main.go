@@ -36,6 +36,7 @@ func initDB() {
 func main() {
 	fmt.Println("now server started...")
 	initDB()
+	defer db.Close()
 
 	// シンプルなハンドラー
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
