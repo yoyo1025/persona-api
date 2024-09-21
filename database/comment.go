@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/yoyo1025/persona-api/model"
+	"github.com/yoyo1025/persona-api/util"
 )
 
 func GetAllCommnetsByID(w http.ResponseWriter, r *http.Request) {
@@ -37,11 +40,11 @@ func GetAllCommnetsByID(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		// コメントを格納するスライス
-		comments := []map[string]interface{}{}
+		comments := []model.Comment{}
 
 		// クエリ結果を読み込み
 		for rows.Next() {
-			var id, userID, personaID int
+			var id, userID, personaID int64
 			var comment string
 			var isUserComment, good bool
 
@@ -52,14 +55,15 @@ func GetAllCommnetsByID(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// コメントデータをマップに格納
-			commentData := map[string]interface{}{
-				"id":              id,
-				"user_id":         userID,
-				"persona_id":      personaID,
-				"comment":         comment,
-				"is_user_comment": isUserComment,
-				"good":            good,
+			commentData := model.Comment{
+				ID:            id,
+				UserID:        userID,
+				PersonaID:     personaID,
+				Comment:       comment,
+				IsUserComment: isUserComment,
+				Good:          good,
 			}
+			
 
 			// スライスに追加
 			comments = append(comments, commentData)
@@ -139,10 +143,10 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		// コメントを格納するスライス
-		comments := []map[string]interface{}{}
+		comments := []model.Comment{}
 
 		for rows.Next() {
-			var id int
+			var id int64
 			var comment string
 
 			err := rows.Scan(&id, &comment)
@@ -151,9 +155,9 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 				return 
 			}
 
-			commentData := map[string]interface{}{
-				"id": id,
-				"comment": comment,
+			commentData := model.Comment{
+				ID : id,
+				Comment: comment,
 			}
 
 			comments = append(comments, commentData)
@@ -165,10 +169,26 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		commentText, err := util.CreateComment(comments, openaiClient)
+		if err != nil {
+			http.Error(w, "AI応答の生成に失敗しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// commentテーブルに挿入
+		commentQuery := `
+			INSERT INTO comment (user_id, persona_id, comment, is_user_comment, good)
+			VALUES ($1, $2, $3, $4, $5)
+		`
+		_, err = db.Exec(commentQuery, 1, personaID, commentText, false, false)
+		if err != nil {
+			http.Error(w, "コメントの挿入に失敗しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		// レスポンスを返す
 		w.Header().Set("Content-Type", "application/json")
-		// response := map[string]string{"message": "コメントが正常に追加されました"}
-		err = json.NewEncoder(w).Encode(comments)
+		err = json.NewEncoder(w).Encode(commentText)
 		if err != nil {
 			http.Error(w, "レスポンスのエンコードに失敗しました: "+err.Error(), http.StatusInternalServerError)
 		}

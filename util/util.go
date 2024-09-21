@@ -31,3 +31,34 @@ func CreatePersonaFirstComment(persona model.Persona, client *openai.Client) (st
 
 	return resp.Choices[0].Message.Content, nil
 }
+
+func CreateComment(comments []model.Comment, client *openai.Client) (string, error) {
+	// 会話履歴を展開
+	var conversationHistory string
+	for _, comment := range comments {
+		conversationHistory += fmt.Sprintf("%s\n", comment.Comment)
+	}
+
+	// プロンプトを作成
+	prompt := fmt.Sprintf(
+		"今から渡す文章のペルソナになり切ったつもりで、次の会話履歴の流れに沿うように簡潔に返答してください。改行は要りません。\n会話履歴:\n%s",
+		conversationHistory,
+	)
+
+	// OpenAIのChatCompletion APIを呼び出して応答を生成
+	resp, err := client.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
+		Model: openai.GPT4,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("OpenAI APIエラー: %v", err)
+	}
+
+	return resp.Choices[0].Message.Content, nil
+}
