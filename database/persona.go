@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/yoyo1025/persona-api/model" // 新しいパッケージをインポート
 	"github.com/yoyo1025/persona-api/util"
@@ -86,5 +87,68 @@ func RegisterPersona(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "レスポンスのエンコードに失敗しました: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+func GetPersonaArchive(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "許可されていないメソッドです", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// リクエストされたパスを取得
+	path := r.URL.Path
+
+	// パスを"/"で分割
+	segments := strings.Split(path, "/")
+
+	// パスの形式をチェック localhost:3000/:userID
+	userID, err := strconv.Atoi(segments[1])
+	if err != nil {
+		http.Error(w, "不正なIDフォーマットです", http.StatusBadRequest)
+		return
+	}
+
+	// クエリ実行
+	query := `SELECT id AS persona_id, user_id, name, problems FROM persona WHERE user_id = $1`
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		http.Error(w, "コメントの取得に失敗しました: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// 履歴を格納するスライス
+	archives := []model.Archive{}
+
+	for rows.Next() {
+		var id, userID int64
+		var name, problems string
+
+		err := rows.Scan(&id, &userID, &name, &problems)
+		if err != nil {
+			http.Error(w, "データの読み取りに失敗しました: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		archiveData := model.Archive{
+			ID:       id,
+			UserID:   userID,
+			Name:     name,
+			Problems: problems,
+		}
+
+		archives = append(archives, archiveData)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "クエリ結果の読み取り中にエラーが発生しました: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// JSONでレスポンスを返す
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(archives)
+	if err != nil {
+		http.Error(w, "レスポンスのエンコードに失敗しました: "+err.Error(), http.StatusInternalServerError)
 	}
 }

@@ -62,6 +62,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// ハンドラーを登録
+	mux.HandleFunc("/", database.GetPersonaArchive)
 	mux.HandleFunc("/register", database.RegisterPersona)
 	mux.HandleFunc("/conversation/", ConversationHandler)
 
