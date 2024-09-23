@@ -11,6 +11,7 @@ import (
 	"github.com/sashabaranov/go-openai"
 	"github.com/yoyo1025/persona-api/database"
 	"github.com/yoyo1025/persona-api/middleware"
+	"github.com/yoyo1025/persona-api/util"
 )
 
 var (
@@ -65,6 +66,9 @@ func main() {
 	mux.HandleFunc("/", database.GetPersonaArchive)
 	mux.HandleFunc("/register", database.RegisterPersona)
 	mux.HandleFunc("/conversation/", ConversationHandler)
+	mux.HandleFunc("/document", func(w http.ResponseWriter, r *http.Request) {
+		util.CreateDocument(w, r, openaiClient)
+	})
 
 	// CORSミドルウェアを適用
 	handler := middleware.CORS(mux)

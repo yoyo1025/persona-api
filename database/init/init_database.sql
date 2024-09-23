@@ -1,4 +1,4 @@
--- CREATE DATABASE IF NOT EXISTS sample_app;
+CREATE DATABASE IF NOT EXISTS sample_app;
 -- 1. usersテーブルの作成
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
