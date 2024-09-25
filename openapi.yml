@@ -1,0 +1,60 @@
+openapi: "3.0.3"
+
+info:
+  title: "Sample API"
+  version: "1.0.0"
+
+paths:
+  "/":
+    get:
+      summary: "会話一覧取得"
+      description: "ペルソナID、ペルソナ名、困りごと、ユーザーIDの一覧を取得します"
+      responses:
+        "200":
+          description: "Success operation"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Hello World!!"
+  "/register":
+    post:
+      summary: "ペルソナを登録"
+      description: "ペルソナを登録します"
+      responses: 
+        "200":
+          description: "Success operation"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Hello World!!"
+  "/conversation/:personaID":
+    get:
+      summary: "会話履歴を取得"
+      description: "会話履歴を取得します"
+      responses:
+        "200":
+          description: "Success operation"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Hello World!!"
+  "/document":
+    post:
+      summary: "要件定義書を作成"
+      description: "要件定義書を作成します"
+      responses:
+        "200":
+          description: "Success operation"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Hello World!!"
+
+
+
+                
+
