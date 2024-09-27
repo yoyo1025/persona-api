@@ -10,7 +10,7 @@ import (
 	"github.com/yoyo1025/persona-api/util"
 )
 
-func GetAllCommnetsByID(w http.ResponseWriter, r *http.Request) {
+func GetAllCommentsByID(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "許可されていないメソッドです", http.StatusMethodNotAllowed)
 		return

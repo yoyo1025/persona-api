@@ -8,41 +8,30 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/sashabaranov/go-openai"
 	"github.com/yoyo1025/persona-api/database"
-	"github.com/yoyo1025/persona-api/middleware"
+	"github.com/yoyo1025/persona-api/router"
 	"github.com/yoyo1025/persona-api/util"
 )
 
 var (
-	openaiClient *openai.Client
+    openaiClient *openai.Client
 )
 
 func main() {
-	fmt.Println("now server started...")
-	database.InitDB()
-	defer database.GetDB().Close()
+    fmt.Println("now server started...")
 
-	// initOpenAI()
-	util.InitOpenAI(&openaiClient)
+    // データベースの初期化
+    database.InitDB()
+    defer database.GetDB().Close()
 
-	// OpenAIクライアントをデータベースパッケージに渡す
-	database.SetOpenAIClient(openaiClient)
+    // OpenAIクライアントの初期化
+    util.InitOpenAI(&openaiClient)
+    database.SetOpenAIClient(openaiClient)
 
-	// マルチプレクサを作成
-	mux := http.NewServeMux()
+    // ルーターを取得
+    handler := router.NewRouter(openaiClient)
 
-	// ハンドラーを登録
-	mux.HandleFunc("/", database.GetPersonaArchive)
-	mux.HandleFunc("/register", database.RegisterPersona)
-	mux.HandleFunc("/conversation/", ConversationHandler)
-	mux.HandleFunc("/document", func(w http.ResponseWriter, r *http.Request) {
-		util.CreateDocument(w, r, openaiClient)
-	})
-
-	// CORSミドルウェアを適用
-	handler := middleware.CORS(mux)
-	
-	// サーバーを起動
-	if err := http.ListenAndServe(":3000", handler); err != nil {
-		log.Fatal("サーバー起動中にエラーが発生しました:", err)
-	}
+    // サーバーを起動
+    if err := http.ListenAndServe(":3000", handler); err != nil {
+        log.Fatal("サーバー起動中にエラーが発生しました:", err)
+    }
 }
