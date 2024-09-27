@@ -118,7 +118,7 @@ func GenerateRequirementsDocument(comments []model.Comment, client *openai.Clien
 
 	// OpenAIのChatCompletion APIを呼び出して応答を生成
 	resp, err := client.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
-		Model: openai.GPT4,
+		Model: openai.GPT4o,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleUser,

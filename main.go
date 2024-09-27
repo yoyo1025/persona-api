@@ -22,7 +22,7 @@ func main() {
 	defer database.GetDB().Close()
 
 	// initOpenAI()
-	util.InitOpenAI(openaiClient)
+	util.InitOpenAI(&openaiClient)
 
 	// OpenAIクライアントをデータベースパッケージに渡す
 	database.SetOpenAIClient(openaiClient)
