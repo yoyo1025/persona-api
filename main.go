@@ -1,11 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	_ "github.com/lib/pq"
 	"github.com/sashabaranov/go-openai"
@@ -15,25 +13,16 @@ import (
 )
 
 var (
-	db           *sql.DB
 	openaiClient *openai.Client
 )
-
-func initOpenAI() {
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		log.Fatal("OpenAI APIキーが設定されていません")
-	}
-	openaiClient = openai.NewClient(apiKey)
-}
 
 func main() {
 	fmt.Println("now server started...")
 	database.InitDB()
-	database.SetDB(db)
-	defer db.Close()
+	defer database.GetDB().Close()
 
-	initOpenAI()
+	// initOpenAI()
+	util.InitOpenAI(openaiClient)
 
 	// OpenAIクライアントをデータベースパッケージに渡す
 	database.SetOpenAIClient(openaiClient)
