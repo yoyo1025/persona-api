@@ -27,9 +27,9 @@ func main() {
     util.InitOpenAI(&openaiClient)
     database.SetOpenAIClient(openaiClient)
 
-    e.GET("/persona/:userID", handler.GetPersonaArchive)
+    e.GET("/persona/:userID", handler.GetPersona)
     e.POST("/persona/:userID/register", handler.RegisterPersona)
-    e.GET("/conversation/:personaID", handler.GetAllMessageByID)
+    e.GET("/conversation/:personaID", handler.GetAllMessage)
     e.POST("/conversation/:personaID", handler.PostMessage)
     e.POST("/document", handler.CreateDocument)
 
