@@ -25,7 +25,7 @@ func main() {
 
     // OpenAIクライアントの初期化
     util.InitOpenAI(&openaiClient)
-    database.SetOpenAIClient(openaiClient)
+    handler.SetOpenAIClient(openaiClient)
 
     e.GET("/persona/:userID", handler.GetPersona)
     e.POST("/persona/:userID/register", handler.RegisterPersona)
