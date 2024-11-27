@@ -11,9 +11,9 @@ func CreateFirstMessage(userID int64, personaID int64, comment string, isUserCom
 		INSERT INTO comment (user_id, persona_id, comment, is_user_comment, good)
 		VALUES ($1, $2, $3, $4, $5)
 	`
-	err := db.QueryRow(query, userID, personaID, comment, isUserComment, good)
+	_, err := db.Exec(query, userID, personaID, comment, isUserComment, good)
 	if err != nil {
-		return err.Err()
+		return err
 	}
 	return nil
 }
