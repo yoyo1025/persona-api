@@ -34,28 +34,26 @@ func RegisterPersona(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid userID"})
 	}
-	name := c.FormValue("name")
-	sex := c.FormValue("sex")
-	age, err := strconv.ParseInt(c.FormValue("age"), 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid userID"})
+
+	var newPersona model.Persona
+	if err := c.Bind(&newPersona); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid request body"})
 	}
-	profession := c.FormValue("profession")
-	problems := c.FormValue("problems")
-	behavior := c.FormValue("behavior")
-	personaID, err := repository.CreatePersona(name, userID, sex, age, profession, problems, behavior)
+
+	personaID, err := repository.CreatePersona(newPersona.Name, userID, newPersona.Sex, newPersona.Age, newPersona.Profession, newPersona.Problems, newPersona.Behavior)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 	persona := model.Persona {
 		ID: personaID,
-		Name: name,
+		Name: newPersona.Name,
 		UserID: userID,
-		Sex: sex,
-		Age: age,
-		Profession: profession,
-		Problems: problems,
-		Behavior: behavior,
+		Sex: newPersona.Sex,
+		Age: newPersona.Age,
+		Profession: newPersona.Profession,
+		Problems: newPersona.Problems,
+		Behavior: newPersona.Behavior,
 	}
 	// OpenAI APIを使ってペルソナの現状を文章化するためのコメントを生成
 	commentText, err := util.CreatePersonaFirstComment(persona, openaiClient)
