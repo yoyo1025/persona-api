@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  persona_app_test:
+  persona_app:
     container_name: ${APP_CONTAINER_NAME}
     build:
       context: .
       dockerfile: ./build/dockerfiles/app/Dockerfile
     depends_on:
-      - persona_db_test
+      - persona_db
     ports:
       - "${APP_PORT}:3000"
     environment:
@@ -18,7 +18,7 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
-  persona_db_test:
+  persona_db:
     container_name: ${DB_HOST}
     build:
       context: .
@@ -32,6 +32,26 @@ services:
       - ./database/init:/docker-entrypoint-initdb.d
     ports:
       - "${DB_PORT}:5432"
+    
+  pgadmin4:
+    image: dpage/pgadmin4:8.4
+    ports: 
+    - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      # PassFileも一緒に配置したかったが、下記を参考にしてもうまくいかなかった
+      # https://stackoverflow.com/questions/66578506/where-is-the-pgpass-file-in-pgadmin4-docker-container-when-this-file-is-mounted
+      - ./config/servers.json:/pgadmin4/servers.json
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@example.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    depends_on:
+      - persona_db
+
+
 
 volumes:
   db-store:
+  pgadmin-data:
