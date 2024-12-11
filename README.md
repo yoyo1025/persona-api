@@ -29,3 +29,6 @@ docker-compose exec db bash
 $ docker-compose exec app sh
 $ go run main.go
 ```
+
+参考リンク
+- https://www.wantedly.com/id/yosei_tadano/items/35b83014-e819-4203-990c-1eadd22a2417
